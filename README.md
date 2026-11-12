@@ -2,7 +2,11 @@
 
 Draw on your Mac screenshots, then paste them anywhere.
 
+![Snaps editor with arrows, boxes and circles drawn on a screenshot](docs/editor.png)
+
 Snaps doesn't replace the macOS screenshot tool. You keep taking screenshots the way you already do. When one lands on your clipboard, Snaps opens it in a small editor. You draw on it, press ⌘C, and paste it into Slack, an email, or an issue. Nothing is saved to disk unless you ask.
+
+![Take a screenshot, draw on it, paste anywhere](docs/flow.png)
 
 - Free draw, line, arrow, rectangle, ellipse
 - 7 colors, 3 line widths, undo
