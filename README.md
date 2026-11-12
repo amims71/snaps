@@ -29,6 +29,8 @@ Press **⇧⌘5**, open **Options**, and choose **Save to: Clipboard**. From the
 
 If you'd rather keep saving screenshots to files, use **⌃⇧⌘4** (or ⌃⇧⌘3) whenever you want to draw on one. Those shortcuts always copy to the clipboard.
 
+**Tip: give it a shorter shortcut.** ⌃⇧⌘4 is a lot of fingers. Open **System Settings → Keyboard → Keyboard Shortcuts… → Screenshots**, double-click the shortcut next to **Copy picture of selected area to the clipboard**, and press something simpler, like **⌘4**. A system shortcut wins over app shortcuts, so ⌘4 stops doing whatever it did in your apps (for example, jumping to the 4th tab in a browser).
+
 macOS may ask once whether Snaps can paste from other apps. Allow it: that's how Snaps sees the screenshot. Snaps only reads the clipboard when it holds an image, and it opens only real screenshots. Images you copy from other apps are ignored.
 
 ## Use
