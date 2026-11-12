@@ -3,13 +3,19 @@ import UniformTypeIdentifiers
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
+    private var clipboardWatcher: ClipboardWatcher?
     private var editors: [EditorWindowController] = []
+    private let saveFolder = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)[0]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         statusItem.button?.image = NSImage(systemSymbolName: "pencil.and.scribble", accessibilityDescription: "Snaps")
 
         let menu = NSMenu()
+        let hint = NSMenuItem(title: "Copy a screenshot (⌃⇧⌘4) to draw on it", action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        menu.addItem(hint)
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Open Image…", action: #selector(openImage), keyEquivalent: "o")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Snaps", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -23,6 +29,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         windowItem.submenu = windowMenu
         mainMenu.addItem(windowItem)
         NSApp.mainMenu = mainMenu
+
+        clipboardWatcher = ClipboardWatcher { [weak self] png in
+            guard let self, let source = CGImageSourceCreateWithData(png as CFData, nil) else { return }
+            let formatter = DateFormatter()
+            formatter.dateFormat = "'Screenshot' yyyy-MM-dd 'at' HH.mm.ss'.png'"
+            openEditor(source: source, imageURL: saveFolder.appendingPathComponent(formatter.string(from: Date())))
+        }
 
         // `open Snaps.app --args /path/to/image.png` opens that image directly.
         for path in CommandLine.arguments.dropFirst() where FileManager.default.fileExists(atPath: path) {
