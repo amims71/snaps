@@ -1,10 +1,12 @@
 import AppKit
+import ServiceManagement
 import UniformTypeIdentifiers
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
     private var clipboardWatcher: ClipboardWatcher?
     private var editors: [EditorWindowController] = []
+    private let loginItem = NSMenuItem(title: "Launch at Login", action: #selector(toggleLoginItem), keyEquivalent: "")
     private let saveFolder = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask)[0]
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -17,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(hint)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Open Image…", action: #selector(openImage), keyEquivalent: "o")
+        menu.addItem(loginItem)
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Snaps", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         statusItem.menu = menu
@@ -30,6 +33,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         mainMenu.addItem(windowItem)
         NSApp.mainMenu = mainMenu
 
+        // Launch at login by default; after the first run the menu toggle decides.
+        if !UserDefaults.standard.bool(forKey: "loginItemConfigured") {
+            try? SMAppService.mainApp.register()
+            UserDefaults.standard.set(true, forKey: "loginItemConfigured")
+        }
+        updateLoginItem()
+
         clipboardWatcher = ClipboardWatcher { [weak self] png in
             guard let self, let source = CGImageSourceCreateWithData(png as CFData, nil) else { return }
             let formatter = DateFormatter()
@@ -41,6 +51,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         for path in CommandLine.arguments.dropFirst() where FileManager.default.fileExists(atPath: path) {
             openEditor(for: URL(fileURLWithPath: path))
         }
+    }
+
+    @objc private func toggleLoginItem() {
+        do {
+            if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            } else {
+                try SMAppService.mainApp.register()
+            }
+        } catch {
+            NSApp.activate(ignoringOtherApps: true)
+            NSAlert(error: error).runModal()
+        }
+        updateLoginItem()
+    }
+
+    private func updateLoginItem() {
+        loginItem.state = SMAppService.mainApp.status == .enabled ? .on : .off
     }
 
     @objc private func openImage() {
@@ -67,6 +95,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.activate(ignoringOtherApps: true)
         controller.window?.makeKeyAndOrderFront(nil)
     }
+}
+
+// Used by the uninstaller: remove the login item, then exit without starting the app.
+if CommandLine.arguments.contains("--unregister") {
+    try? SMAppService.mainApp.unregister()
+    exit(0)
 }
 
 let app = NSApplication.shared
